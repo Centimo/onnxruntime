@@ -1,0 +1,12 @@
+sources:
+  "1.21.1":
+    url: "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.21.1.tar.gz"
+    sha256: "afd53e380d534c5285598f0010b9fe99c6c05ea83de11bddf3b9d51686746a03"
+patches:
+  "1.21.1":
+    - patch_file: "patches/cmake-cxx-standard.patch"
+
+# ONNX versions are based on the minor version used at
+# https://github.com/microsoft/onnxruntime/tree/main/cmake/external
+onnx_version_map:
+  "1.21.1": "1.17.0"
