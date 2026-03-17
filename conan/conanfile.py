@@ -29,12 +29,12 @@ class OnnxRuntimeConan(ConanFile):
         "shared": False,
         "fPIC": True,
         "with_xnnpack": False,
+        "date/*:use_system_tz_db": True,
     }
     short_paths = True
 
     def export_sources(self):
         export_conandata_patches(self)
-        copy(self, "cmake/*", src=self.recipe_folder, dst=self.export_sources_folder)
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -50,24 +50,21 @@ class OnnxRuntimeConan(ConanFile):
     def requirements(self):
         required_onnx_version = self.conan_data["onnx_version_map"][self.version]
         self.requires(f"onnx/{required_onnx_version}")
-        self.requires("abseil/[>=20240116.1 <=20240722.0]")
-        self.requires("protobuf/[>=3.21.12 <4]")
-        self.requires("date/[>=3.0.1 <3.1]")
-        self.requires("re2/[>=20231101]")
+        self.requires("abseil/20240722.0")
+        self.requires("protobuf/3.21.12")
+        self.requires("date/3.0.1")
         self.requires("flatbuffers/23.5.26")
-        self.requires("boost/[>=1.83.0 <1.90.0]", headers=True, libs=False)  # for mp11, header only
         self.requires("safeint/3.0.28")
-        self.requires("nlohmann_json/[>=3.11.3 <3.12]")
-        self.requires("eigen/[>=3.4.0 <4]")
+        self.requires("nlohmann_json/3.11.3")
         self.requires("ms-gsl/4.0.0")
         if self.settings.os != "Windows":
             self.requires("nsync/1.26.0")
         else:
             self.requires("wil/1.0.230629.1")
         if self.options.with_xnnpack:
-            self.requires("xnnpack/[>=cci.20241203]")
+            self.requires("xnnpack/cci.20220801")
             self.requires("pthreadpool/cci.20231129")
-        self.requires("cpuinfo/[>=cci.20250110]")
+        # eigen, re2, cpuinfo, boost/mp11 have no matching conan version — fetched by cmake via FetchContent
 
     def validate(self):
         check_min_cppstd(self, 17)
@@ -84,18 +81,16 @@ class OnnxRuntimeConan(ConanFile):
         if self.settings.os == "Windows" and self.dependencies["abseil"].options.shared:
             raise ConanInvalidConfiguration("Using abseil shared on Windows leads to link errors.")
 
-    def build_requirements(self):
-        # Required by upstream https://github.com/microsoft/onnxruntime/blob/v1.21.1/cmake/CMakeLists.txt#L5
-        self.tool_requires("cmake/[>=3.28]")
-
     def source(self):
         get(self, **self.conan_data["sources"][self.version], strip_root=True)
         self._patch_sources()
 
     def generate(self):
         tc = CMakeToolchain(self)
-        # disable downloading dependencies to ensure conan ones are used
-        tc.variables["FETCHCONTENT_FULLY_DISCONNECTED"] = True
+        # Allow cmake to fetch eigen, re2, cpuinfo, boost/mp11 via FetchContent
+        tc.variables["FETCHCONTENT_FULLY_DISCONNECTED"] = False
+        # Persist FetchContent downloads across Conan rebuilds (new package hash = new build dir)
+        tc.variables["FETCHCONTENT_BASE_DIR"] = "/workspace/conan-cache/fetchcontent"
 
         tc.variables["onnxruntime_BUILD_SHARED_LIB"] = self.options.shared
         tc.variables["onnxruntime_USE_FULL_PROTOBUF"] = not self.dependencies["protobuf"].options.lite
@@ -122,17 +117,25 @@ class OnnxRuntimeConan(ConanFile):
         tc.generate()
 
         deps = CMakeDeps(self)
-        deps.set_property("boost::headers", "cmake_target_name", "Boost::mp11")
         deps.set_property("flatbuffers", "cmake_target_name", "flatbuffers::flatbuffers")
         deps.generate()
 
     def _patch_sources(self):
         apply_conandata_patches(self)
-        copy(self, "onnxruntime_external_deps.cmake",
-             src=os.path.join(self.export_sources_folder, "cmake"),
-             dst=os.path.join(self.source_folder, "cmake", "external"))
         replace_in_file(self, os.path.join(self.source_folder, "cmake", "CMakeLists.txt"),
                         "if (Git_FOUND)", "if (FALSE)")
+        # GitLab regenerates zip archives, making SHA1 hashes unreliable; remove the hash check for eigen
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "external", "eigen.cmake"),
+                        "URL_HASH SHA1=${DEP_SHA1_eigen}\n",
+                        "")
+        # When abseil is provided by Conan (find_package), include dirs are not set globally;
+        # add them explicitly so onnxruntime headers can find absl/ includes
+        replace_in_file(self, os.path.join(self.source_folder, "cmake", "external", "abseil-cpp.cmake"),
+                        "message(STATUS \"Abseil source dir:\" ${ABSEIL_SOURCE_DIR})",
+                        "message(STATUS \"Abseil source dir:\" ${ABSEIL_SOURCE_DIR})\n"
+                        "if(NOT ABSEIL_SOURCE_DIR)\n"
+                        "  include_directories(${absl_INCLUDE_DIRS})\n"
+                        "endif()")
 
     def build(self):
         cmake = CMake(self)
@@ -180,7 +183,6 @@ class OnnxRuntimeConan(ConanFile):
         if self.settings.os == "Windows":
             self.cpp_info.system_libs.append("shlwapi")
 
-        # https://github.com/microsoft/onnxruntime/blob/v1.21.1/cmake/CMakeLists.txt
         self.cpp_info.set_property("cmake_file_name", "onnxruntime")
         self.cpp_info.set_property("cmake_target_name", "onnxruntime::onnxruntime")
         self.cpp_info.set_property("pkg_config_name", "onnxruntime")
