@@ -655,7 +655,17 @@ else()
           ${MLAS_SRC_DIR}/rotary_embedding_kernel_avx2.cpp
           ${MLAS_SRC_DIR}/rotary_embedding_kernel_avx2.cpp
         )
-        if(CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 13.1 AND NOT(APPLE))
+        # cvtfp16Avx.S uses AVX-NE-CONVERT instructions (vcvtneeph2ps, vcvtneoph2ps)
+        # which require binutils >= 2.40. Check assembler version before including.
+        execute_process(
+          COMMAND ${CMAKE_ASM_COMPILER} --version
+          OUTPUT_VARIABLE _AS_VERSION_OUTPUT
+          ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
+        )
+        string(REGEX MATCH "([0-9]+)\\.([0-9]+)" _AS_VERSION_FULL "${_AS_VERSION_OUTPUT}")
+        string(REGEX MATCH "^([0-9]+)" _AS_MAJOR "${_AS_VERSION_FULL}")
+        string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" _AS_MINOR "${_AS_VERSION_FULL}")
+        if(CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 13.1 AND NOT(APPLE) AND (_AS_MAJOR GREATER 2 OR (_AS_MAJOR EQUAL 2 AND _AS_MINOR GREATER_EQUAL 40)))
           set(mlas_platform_srcs_avx2
             ${mlas_platform_srcs_avx2}
             ${MLAS_SRC_DIR}/x86_64/cvtfp16Avx.S

@@ -1,0 +1,14 @@
+sources:
+  "1.23.2":
+    url: "https://github.com/Centimo/onnxruntime/archive/refs/heads/conan-recipe-1.23.2.tar.gz"
+
+patches:
+  "1.23.2":
+    - patch_file: "patches/cmake-cxx-standard.patch"
+    - patch_file: "patches/fix-gcc-chrono-cxx20.patch"
+    - patch_file: "patches/fix-avx-ne-convert-binutils.patch"
+
+# ONNX versions are based on the minor version used at
+# https://github.com/microsoft/onnxruntime/tree/main/cmake/external
+onnx_version_map:
+  "1.23.2": "1.18.0"
