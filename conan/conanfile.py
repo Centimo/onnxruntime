@@ -35,6 +35,8 @@ class OnnxRuntimeConan(ConanFile):
 
     def export_sources(self):
         export_conandata_patches(self)
+        copy(self, "*", src=os.path.join(self.recipe_folder, ".."), dst=self.export_sources_folder,
+             excludes=["conan/*", ".git/*"])
 
     def config_options(self):
         if self.settings.os == "Windows":
@@ -45,7 +47,7 @@ class OnnxRuntimeConan(ConanFile):
             self.options.rm_safe("fPIC")
 
     def layout(self):
-        cmake_layout(self, src_folder="src")
+        cmake_layout(self)
 
     def requirements(self):
         required_onnx_version = self.conan_data["onnx_version_map"][self.version]
@@ -61,6 +63,8 @@ class OnnxRuntimeConan(ConanFile):
             self.requires("nsync/1.26.0")
         else:
             self.requires("wil/1.0.230629.1")
+        self.requires("re2/20251105")
+        self.requires("cpuinfo/cci.20251210")
         if self.options.with_xnnpack:
             self.requires("xnnpack/cci.20220801")
             self.requires("pthreadpool/cci.20231129")
@@ -82,7 +86,11 @@ class OnnxRuntimeConan(ConanFile):
             raise ConanInvalidConfiguration("Using abseil shared on Windows leads to link errors.")
 
     def source(self):
-        get(self, **self.conan_data["sources"][self.version], strip_root=True)
+        if os.path.exists(os.path.join(self.source_folder, "cmake", "CMakeLists.txt")):
+            self.output.info("Sources found in source_folder (from export_sources), skipping download")
+        else:
+            self.output.info(f"Sources not found in {self.source_folder}, downloading tarball")
+            get(self, **self.conan_data["sources"][self.version], strip_root=True)
         self._patch_sources()
 
     def generate(self):
@@ -104,13 +112,13 @@ class OnnxRuntimeConan(ConanFile):
 
         tc.variables["onnxruntime_ARMNN_RELU_USE_CPU"] = False
         tc.variables["onnxruntime_ARMNN_BN_USE_CPU"] = False
-        tc.variables["onnxruntime_ENABLE_CPU_FP16_OPS"] = False
+        tc.variables["onnxruntime_ENABLE_CPU_FP16_OPS"] = True
         tc.variables["onnxruntime_ENABLE_EAGER_MODE"] = False
         tc.variables["onnxruntime_ENABLE_LAZY_TENSOR"] = False
 
         tc.variables["onnxruntime_ENABLE_CUDA_EP_INTERNAL_TESTS"] = False
         tc.variables["onnxruntime_USE_NEURAL_SPEED"] = False
-        tc.variables["onnxruntime_USE_MEMORY_EFFICIENT_ATTENTION"] = False
+        tc.variables["onnxruntime_USE_MEMORY_EFFICIENT_ATTENTION"] = True
 
         # Disable a warning that gets converted to an error
         tc.preprocessor_definitions["_SILENCE_ALL_CXX23_DEPRECATION_WARNINGS"] = "1"

@@ -1,10 +1,11 @@
 sources:
   "1.21.1":
-    url: "https://github.com/microsoft/onnxruntime/archive/refs/tags/v1.21.1.tar.gz"
-    sha256: "afd53e380d534c5285598f0010b9fe99c6c05ea83de11bddf3b9d51686746a03"
+    url: "https://github.com/Centimo/onnxruntime/archive/refs/heads/conan-recipe-1.21.tar.gz"
+    sha256: "db1071825520dc33c302ea727ce1fb5879b1e814dd022aee72aed2ae32fd83d6"
 patches:
   "1.21.1":
     - patch_file: "patches/cmake-cxx-standard.patch"
+    - patch_file: "patches/fix-gcc-chrono-cxx20.patch"
 
 # ONNX versions are based on the minor version used at
 # https://github.com/microsoft/onnxruntime/tree/main/cmake/external
