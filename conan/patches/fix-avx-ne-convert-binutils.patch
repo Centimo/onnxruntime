@@ -1,6 +1,6 @@
 --- a/cmake/onnxruntime_mlas.cmake
 +++ b/cmake/onnxruntime_mlas.cmake
-@@ -655,7 +655,16 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_6
+@@ -655,7 +655,24 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_6
          ${mlas_platform_srcs_avx2}
          ${MLAS_SRC_DIR}/rotary_embedding_kernel_avx2.cpp
        )
@@ -8,14 +8,33 @@
 +      # cvtfp16Avx.S uses AVX-NE-CONVERT instructions (vcvtneeph2ps, vcvtneoph2ps)
 +      # which require binutils >= 2.40. Check assembler version before including.
 +      execute_process(
-+        COMMAND ${CMAKE_ASM_COMPILER} --version
++        COMMAND as --version
 +        OUTPUT_VARIABLE _AS_VERSION_OUTPUT
 +        ERROR_QUIET OUTPUT_STRIP_TRAILING_WHITESPACE
 +      )
-+      string(REGEX MATCH "([0-9]+)\\.([0-9]+)" _AS_VERSION "${_AS_VERSION_OUTPUT}")
-+      string(REGEX MATCH "^([0-9]+)" _AS_MAJOR "${_AS_VERSION}")
-+      string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" _AS_MINOR "${_AS_VERSION}")
++      string(REGEX MATCH "[0-9]+\\.[0-9]+" _AS_VERSION_FULL "${_AS_VERSION_OUTPUT}")
++      string(REGEX MATCH "^[0-9]+" _AS_MAJOR "${_AS_VERSION_FULL}")
++      string(REGEX REPLACE "^[0-9]+\\.([0-9]+).*" "\\1" _AS_MINOR "${_AS_VERSION_FULL}")
 +      if(CMAKE_CXX_COMPILER_VERSION GREATER_EQUAL 13.1 AND NOT(APPLE) AND (_AS_MAJOR GREATER 2 OR (_AS_MAJOR EQUAL 2 AND _AS_MINOR GREATER_EQUAL 40)))
          set(mlas_platform_srcs_avx2
            ${mlas_platform_srcs_avx2}
            ${MLAS_SRC_DIR}/x86_64/cvtfp16Avx.S
+         )
++        set(MLAS_AVX_NE_CONVERT_SUPPORTED TRUE)
+       endif()
++
++if(MLAS_AVX_NE_CONVERT_SUPPORTED)
++  target_compile_definitions(onnxruntime_mlas PRIVATE MLAS_AVX_NE_CONVERT_SUPPORTED)
++endif()
++
+--- a/onnxruntime/core/mlas/lib/platform.cpp
++++ b/onnxruntime/core/mlas/lib/platform.cpp
+@@ -512,7 +512,7 @@ MLAS_PLATFORM::MLAS_PLATFORM(
+ #ifndef __APPLE__
+-#if (defined(_MSC_VER) && (_MSC_VER >= 1933)) || (defined(__GNUC__) && (__GNUC__ >= 13))
++#if defined(MLAS_AVX_NE_CONVERT_SUPPORTED) && ((defined(_MSC_VER) && (_MSC_VER >= 1933)) || (defined(__GNUC__) && (__GNUC__ >= 13)))
+                 if ((Cpuid7_1[3] & (0b1 << 5)) != 0) {
+                     this->CastF16ToF32Kernel = &MlasCastF16ToF32KernelAvx;
+                 }
+-#endif  // (defined(_MSC_VER) && (_MSC_VER >= 1933)) || (defined(__GNUC__) && (__GNUC__ >= 13))
++#endif  // defined(MLAS_AVX_NE_CONVERT_SUPPORTED) && (...)
