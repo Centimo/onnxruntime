@@ -1,14 +1,15 @@
 --- a/include/onnxruntime/core/common/logging/logging.h
 +++ b/include/onnxruntime/core/common/logging/logging.h
-@@ -63,6 +63,11 @@ using Timestamp = std::chrono::time_point<std::chrono::system_clock>;
- // define a temporary value to determine whether to use the std::chrono or date implementation.
- #define ORT_USE_CXX20_STD_CHRONO __cplusplus >= 202002L
-
+@@ -61,6 +61,12 @@
+ // C++20 has operator<< in std::chrono for Timestamp type but mac builds need additional checks
+ // to ensure usage is valid.
+ // TODO: As we enable C++20 on other platforms we may need similar checks.
++
 +// GCC added full support for std::chrono::operator<< in version 13.
 +#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ < 13
 +#undef ORT_USE_CXX20_STD_CHRONO
 +#endif
 +
- // Apply constraints for mac builds
- #if __APPLE__
- #include <TargetConditionals.h>
+ // define a temporary value to determine whether to use the std::chrono or date implementation.
+ #define ORT_USE_CXX20_STD_CHRONO __cplusplus >= 202002L
+ 
