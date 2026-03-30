@@ -6,7 +6,6 @@ patches:
   "1.23.2":
     - patch_file: "patches/cmake-cxx-standard.patch"
     - patch_file: "patches/fix-gcc-chrono-cxx20.patch"
-    - patch_file: "patches/fix-avx-ne-convert-binutils.patch"
 
 # ONNX versions are based on the minor version used at
 # https://github.com/microsoft/onnxruntime/tree/main/cmake/external
