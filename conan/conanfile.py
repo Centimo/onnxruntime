@@ -12,6 +12,7 @@ required_conan_version = ">=2"
 
 class OnnxRuntimeConan(ConanFile):
     name = "onnxruntime"
+    version = "1.23.2"
     description = "ONNX Runtime: cross-platform, high performance ML inferencing and training accelerator"
     url = "https://github.com/Centimo/onnxruntime"
     license = "MIT"
@@ -52,7 +53,7 @@ class OnnxRuntimeConan(ConanFile):
     def requirements(self):
         required_onnx_version = self.conan_data["onnx_version_map"][self.version]
         self.requires(f"onnx/{required_onnx_version}")
-        self.requires("abseil/20240722.0")
+        self.requires("abseil/20250512.1")
         self.requires("protobuf/3.21.12")
         self.requires("date/3.0.1")
         self.requires("flatbuffers/23.5.26")
