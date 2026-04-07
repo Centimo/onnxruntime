@@ -71,6 +71,17 @@ class OnnxRuntimeConan(ConanFile):
             self.requires("pthreadpool/cci.20231129")
         # eigen, re2, cpuinfo, boost/mp11 have no matching conan version — fetched by cmake via FetchContent
 
+    def package_id(self):
+        _requires = [
+            "onnx", "abseil", "protobuf", "date", "flatbuffers",
+            "safeint", "nlohmann_json", "ms-gsl", "re2", "cpuinfo",
+            # conditional:
+            "nsync", "wil", "xnnpack", "pthreadpool",
+        ]
+        for name in _requires:
+            if name in self.info.requires:
+                self.info.requires[name].full_package_mode()
+
     def validate(self):
         check_min_cppstd(self, 17)
         onnx = self.dependencies["onnx"]
