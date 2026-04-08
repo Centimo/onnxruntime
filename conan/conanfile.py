@@ -72,6 +72,7 @@ class OnnxRuntimeConan(ConanFile):
         # eigen, re2, cpuinfo, boost/mp11 have no matching conan version — fetched by cmake via FetchContent
 
     def package_id(self):
+        self.info.recipe_revision_mode()
         _requires = [
             "onnx", "abseil", "protobuf", "date", "flatbuffers",
             "safeint", "nlohmann_json", "ms-gsl", "re2", "cpuinfo",
