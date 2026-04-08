@@ -1,6 +1,7 @@
 sources:
   "1.23.2":
-    url: "https://github.com/Centimo/onnxruntime/archive/refs/heads/conan-recipe-1.23.2.tar.gz"
+    url: "https://github.com/Centimo/onnxruntime/archive/a993e2371.tar.gz"
+    sha256: "ed1460b1f3c18c35a0a7816cf78552ebe66a71d62c75a8826e3ed69c6002488e"
 
 patches:
   "1.23.2":
