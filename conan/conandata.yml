@@ -1,7 +1,7 @@
 sources:
   "1.23.2":
-    url: "https://github.com/Centimo/onnxruntime/archive/a993e2371.tar.gz"
-    sha256: "ed1460b1f3c18c35a0a7816cf78552ebe66a71d62c75a8826e3ed69c6002488e"
+    url: "https://github.com/Centimo/onnxruntime/archive/8126c25e7.tar.gz"
+    sha256: "1e3d4fbb2b3ceea7e7670ddb5f9575dc496ecd5ac64f7f81d8be2bdb2b4ed05d"
 
 patches:
   "1.23.2":
