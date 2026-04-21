@@ -37,7 +37,7 @@ mp11;https://github.com/boostorg/mp11/archive/refs/tags/boost-1.82.0.zip;9bc9e01
 onnx;https://github.com/onnx/onnx/archive/refs/tags/v1.18.0.zip;f156d032a3af91b66d554e11158b33ca77bbb1f2
 # Use the latest commit of 10.9-GA
 onnx_tensorrt;https://github.com/onnx/onnx-tensorrt/archive/d5dce67db7c2e64b07e055571f5ec06f7f254de2.zip;01114d3b67650857281fa50faa2e412130a63b69
-protobuf;https://github.com/Centimo/protobuf/archive/4ba9891daf214231f7475ac06b2d2b4c6c17c974.zip;5c450efdfacea2127c49160951b5ae0ec9587acd
+protobuf;https://github.com/Centimo/protobuf/archive/1da9ac13568afbf130e1408bf248310cd056c2f0.zip;f6d6c1639fbf7bf3088430c314ba00520d64ed47
 protoc_win64;https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-win64.zip;b4521f7ada5b260380f94c4bd7f1b7684c76969a
 protoc_win32;https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-win32.zip;3688010318192c46ce73213cdfb6b3e5656da874
 protoc_linux_x64;https://github.com/protocolbuffers/protobuf/releases/download/v21.12/protoc-21.12-linux-x86_64.zip;338462004aa5be9fba45b35b5b4be43f69b47a90
