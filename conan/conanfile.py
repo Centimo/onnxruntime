@@ -105,12 +105,29 @@ class OnnxRuntimeConan(ConanFile):
             get(self, **self.conan_data["sources"][self.version], strip_root=True)
         self._patch_sources()
 
+    @staticmethod
+    def _conan_home():
+        # Resolve the Conan home exactly as Conan does (CONAN_HOME env, then .conanrc, then the
+        # ~/.conan2 default), reusing Conan's own resolver so .conanrc and ~ expansion stay correct.
+        # The import is internal API; if it ever moves, degrade to the env/default path rather than
+        # break the recipe. Returns an absolute path.
+        try:
+            from conan.internal.paths import get_conan_user_home
+            return os.path.abspath(get_conan_user_home())
+        except ImportError:
+            env_home = os.getenv("CONAN_HOME")
+            if env_home:
+                return os.path.abspath(os.path.expanduser(env_home))
+            return os.path.join(os.path.expanduser("~"), ".conan2")
+
     def generate(self):
         tc = CMakeToolchain(self)
         # Allow cmake to fetch eigen, re2, cpuinfo, boost/mp11 via FetchContent
         tc.variables["FETCHCONTENT_FULLY_DISCONNECTED"] = False
-        # Persist FetchContent downloads across Conan rebuilds (new package hash = new build dir)
-        tc.variables["FETCHCONTENT_BASE_DIR"] = "/workspace/conan-cache/fetchcontent"
+        # Persist FetchContent downloads across Conan rebuilds (new package hash = new build dir).
+        # Anchor to the Conan home so the cache lives on the same persistent storage as the Conan
+        # cache (in CI it is a runner volume mounted as CONAN_HOME); fall back to ~/.conan2 off-CI.
+        tc.variables["FETCHCONTENT_BASE_DIR"] = os.path.join(self._conan_home(), "fetchcontent")
 
         tc.variables["onnxruntime_BUILD_SHARED_LIB"] = self.options.shared
         tc.variables["onnxruntime_USE_FULL_PROTOBUF"] = not self.dependencies["protobuf"].options.lite
