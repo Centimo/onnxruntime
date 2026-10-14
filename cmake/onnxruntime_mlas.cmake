@@ -676,13 +676,30 @@ else()
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_CXX_COMPILER_VERSION: ${CMAKE_CXX_COMPILER_VERSION}")
 
-if(NOT "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU" OR CMAKE_CXX_COMPILER_VERSION VERSION_GREATER "11")
+        # sqnbitgemm_kernel_avx2.cpp uses AVX-VNNI intrinsics: the compiler must accept -mavxvnni and the assembler
+        # must know vpdpbusds (binutils >= 2.36). The compiler version tells nothing about the assembler, so build
+        # a program that uses the instruction.
+        include(CheckCXXSourceCompiles)
+        include(CMakePushCheckState)
+        cmake_push_check_state()
+        set(CMAKE_REQUIRED_FLAGS "-mavx2 -mavxvnni")
+        check_cxx_source_compiles("
+          #include <immintrin.h>
+          int main(int argc, char**) {
+            const __m256i value = _mm256_set1_epi32(argc);
+            return _mm256_extract_epi32(_mm256_dpbusds_avx_epi32(value, value, value), 0);
+          }"
+          MLAS_AVXVNNI_INTRINSICS_COMPILE
+        )
+        cmake_pop_check_state()
+        if(MLAS_AVXVNNI_INTRINSICS_COMPILE)
           message(STATUS "Using -mavx2 -mfma -mavxvnni flags")
           set_source_files_properties(${mlas_platform_srcs_avx2} PROPERTIES COMPILE_FLAGS "-mavx2 -mfma -mf16c -mavxvnni")
-else()
-          message(STATUS "Using -mavx2 -mfma flags")
+        else()
+          message(STATUS "Using -mavx2 -mfma flags: the toolchain cannot build AVX-VNNI intrinsics")
           set_source_files_properties(${mlas_platform_srcs_avx2} PROPERTIES COMPILE_FLAGS "-mavx2 -mfma -mf16c")
-endif()
+          set(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED TRUE)
+        endif()
         set(mlas_platform_srcs_avx512f
           ${MLAS_SRC_DIR}/x86_64/DgemmKernelAvx512F.S
           ${MLAS_SRC_DIR}/x86_64/SgemmKernelAvx512F.S
@@ -789,6 +806,10 @@ endif()
 
 if(MLAS_AVX_NE_CONVERT_SUPPORTED)
   target_compile_definitions(onnxruntime_mlas PRIVATE MLAS_AVX_NE_CONVERT_SUPPORTED)
+endif()
+
+if(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
+  target_compile_definitions(onnxruntime_mlas PRIVATE MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
 endif()
 
 foreach(mlas_target ${ONNXRUNTIME_MLAS_LIBS})

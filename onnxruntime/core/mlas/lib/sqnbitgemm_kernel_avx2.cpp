@@ -667,6 +667,8 @@ SQ8BitGemmKernel_BlkSum_CompInt8_avx2(
     return CountM;
 }
 
+#if !defined(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
+
 size_t
 SQ4BitGemmKernel_BlkSum_CompInt8_avx2vnni(
   const size_t BlkLen,
@@ -721,6 +723,8 @@ SQ4BitGemmKernel_BlkSum_CompInt8_avx2vnni(
     }
     return CountM;
 }
+
+#endif  // !defined(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
 
 template <size_t NCols, bool HasZeroPoint>
 MLAS_FORCEINLINE void
@@ -1462,6 +1466,8 @@ const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx2 = []() {
     return d;
 }();
 
+#if !defined(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
+
 const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx2vnni = []() {
     MLAS_QNBIT_GEMM_DISPATCH d;
 
@@ -1483,3 +1489,5 @@ const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx2vnni = []() {
 
     return d;
 }();
+
+#endif  // !defined(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)

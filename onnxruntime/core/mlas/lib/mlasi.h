@@ -1206,7 +1206,9 @@ GetMlasQNBitGemmDispatchNeon(
 
 extern const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx2;
 
+#if !defined(MLAS_AVXVNNI_INTRINSICS_UNSUPPORTED)
 extern const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx2vnni;
+#endif
 
 extern const MLAS_QNBIT_GEMM_DISPATCH MlasSQNBitGemmDispatchAvx512;
 
