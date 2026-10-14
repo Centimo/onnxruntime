@@ -131,10 +131,33 @@ if(WIN32)
 endif()
 
 if(NOT WIN32 AND NOT APPLE AND NOT ANDROID AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-    set_source_files_properties(
-      ${ONNXRUNTIME_ROOT}/core/common/spin_pause.cc
-      PROPERTIES COMPILE_FLAGS "-mwaitpkg"
+    # spin_pause.cc uses the WAITPKG instruction tpause: the compiler must accept -mwaitpkg and the assembler must
+    # know tpause (binutils >= 2.31). The compiler version tells nothing about the assembler, so build a program
+    # that uses the instruction.
+    include(CheckCXXSourceCompiles)
+    include(CMakePushCheckState)
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "-mwaitpkg")
+    check_cxx_source_compiles("
+      #include <x86intrin.h>
+      int main(int argc, char**) {
+        return __builtin_ia32_tpause(0x0, __rdtsc() + argc);
+      }"
+      ORT_TPAUSE_COMPILES
     )
+    cmake_pop_check_state()
+    if(ORT_TPAUSE_COMPILES)
+      set_source_files_properties(
+        ${ONNXRUNTIME_ROOT}/core/common/spin_pause.cc
+        PROPERTIES COMPILE_FLAGS "-mwaitpkg"
+      )
+    else()
+      message(STATUS "spin_pause.cc uses _mm_pause: the toolchain cannot build the tpause instruction")
+      set_source_files_properties(
+        ${ONNXRUNTIME_ROOT}/core/common/spin_pause.cc
+        PROPERTIES COMPILE_DEFINITIONS ORT_TPAUSE_UNSUPPORTED
+      )
+    endif()
 endif()
 
 if (onnxruntime_USE_TELEMETRY)
