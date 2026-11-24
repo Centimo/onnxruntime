@@ -32,6 +32,16 @@
     HINTS ${TENSORRT_ROOT}
     PATH_SUFFIXES include)
 
+  if(DEFINED onnxruntime_EXPECTED_TENSORRT_VERSION)
+    include("${CMAKE_CURRENT_LIST_DIR}/onnxruntime_gpu_sdk_versions.cmake")
+    if(NOT EXISTS "${TENSORRT_INCLUDE_DIR}/NvInferVersion.h")
+      message(FATAL_ERROR
+        "TensorRT: expected ${onnxruntime_EXPECTED_TENSORRT_VERSION}; actual headers unverifiable; "
+        "selected header '${TENSORRT_INCLUDE_DIR}/NvInferVersion.h', "
+        "library '${TENSORRT_LIBRARY_INFER}'")
+    endif()
+  endif()
+
   file(READ ${TENSORRT_INCLUDE_DIR}/NvInferVersion.h NVINFER_VER_CONTENT)
 
   # Starting TRT 10.11, TRT version macros have changed
@@ -52,6 +62,14 @@
     string(REGEX REPLACE "define TRT_MINOR_ENTERPRISE * +([0-9]+)" "\\1" NV_TENSORRT_MINOR "${NV_TENSORRT_MINOR}")
     string(REGEX MATCH "define TRT_PATCH_ENTERPRISE * +([0-9]+)" NV_TENSORRT_PATCH "${NVINFER_VER_CONTENT}")
     string(REGEX REPLACE "define TRT_PATCH_ENTERPRISE * +([0-9]+)" "\\1" NV_TENSORRT_PATCH "${NV_TENSORRT_PATCH}")
+  endif()
+
+  if(DEFINED onnxruntime_EXPECTED_TENSORRT_VERSION AND
+     NOT "${NV_TENSORRT_MAJOR}.${NV_TENSORRT_MINOR}.${NV_TENSORRT_PATCH}" MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR
+      "TensorRT: expected ${onnxruntime_EXPECTED_TENSORRT_VERSION}; actual headers unverifiable "
+      "'${NV_TENSORRT_MAJOR}.${NV_TENSORRT_MINOR}.${NV_TENSORRT_PATCH}'; "
+      "selected header '${TENSORRT_INCLUDE_DIR}/NvInferVersion.h', library '${TENSORRT_LIBRARY_INFER}'")
   endif()
 
   math(EXPR NV_TENSORRT_MAJOR_INT "${NV_TENSORRT_MAJOR}")
@@ -91,6 +109,12 @@
   find_library(TENSORRT_LIBRARY_INFER ${NVINFER_LIB}
     HINTS ${TENSORRT_ROOT}
     PATH_SUFFIXES lib lib64 lib/x64)
+
+  if(DEFINED onnxruntime_EXPECTED_TENSORRT_VERSION)
+    onnxruntime_check_gpu_library(
+      "TensorRT" "${onnxruntime_EXPECTED_TENSORRT_VERSION}" "${TENSORRT_LIBRARY_INFER}"
+      "${TENSORRT_INCLUDE_DIR}/NvInferVersion.h")
+  endif()
 
   if (NOT TENSORRT_LIBRARY_INFER)
     MESSAGE(STATUS "Can't find ${NVINFER_LIB}")

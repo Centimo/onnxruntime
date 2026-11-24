@@ -1,11 +1,24 @@
 add_library(CUDNN::cudnn_all INTERFACE IMPORTED)
 
+set(cudnn_required REQUIRED)
+if(DEFINED onnxruntime_EXPECTED_CUDNN_VERSION)
+    include("${CMAKE_CURRENT_LIST_DIR}/../onnxruntime_gpu_sdk_versions.cmake")
+    set(cudnn_required)
+endif()
+
 find_path(
     CUDNN_INCLUDE_DIR cudnn.h
     HINTS $ENV{CUDNN_PATH} ${CUDNN_PATH} ${Python_SITEARCH}/nvidia/cudnn ${CUDAToolkit_INCLUDE_DIRS}
     PATH_SUFFIXES include
-    REQUIRED
+    ${cudnn_required}
 )
+
+if(DEFINED onnxruntime_EXPECTED_CUDNN_VERSION AND
+   NOT EXISTS "${CUDNN_INCLUDE_DIR}/cudnn_version.h")
+    message(FATAL_ERROR
+        "cuDNN: expected ${onnxruntime_EXPECTED_CUDNN_VERSION}; actual headers unverifiable; "
+        "selected header '${CUDNN_INCLUDE_DIR}/cudnn_version.h', library '${cudnn_LIBRARY}'")
+endif()
 
 file(READ "${CUDNN_INCLUDE_DIR}/cudnn_version.h" cudnn_version_header)
 string(REGEX MATCH "#define CUDNN_MAJOR [1-9]+" macrodef "${cudnn_version_header}")
@@ -16,8 +29,13 @@ function(find_cudnn_library NAME)
         ${NAME}_LIBRARY ${NAME} "lib${NAME}.so.${CUDNN_MAJOR_VERSION}"
         HINTS $ENV{CUDNN_PATH} ${CUDNN_PATH} ${Python_SITEARCH}/nvidia/cudnn ${CUDAToolkit_LIBRARY_DIR}
         PATH_SUFFIXES lib64 lib/x64 lib
-        REQUIRED
+        ${cudnn_required}
     )
+    if(DEFINED onnxruntime_EXPECTED_CUDNN_VERSION)
+        onnxruntime_check_gpu_library(
+            "cuDNN" "${onnxruntime_EXPECTED_CUDNN_VERSION}" "${${NAME}_LIBRARY}"
+            "${CUDNN_INCLUDE_DIR}/cudnn_version.h")
+    endif()
 
     if(${NAME}_LIBRARY)
         add_library(CUDNN::${NAME} UNKNOWN IMPORTED)
