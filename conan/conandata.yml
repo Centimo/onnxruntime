@@ -1,14 +1,14 @@
 sources:
-  "1.23.2.1":
+  "1.23.2.2":
     url: "https://github.com/Centimo/onnxruntime/archive/4b718242a34dd43ccab202456287429fae27c117.tar.gz"
     sha256: "71b580a6b486184f48c1da2fb00f8d817243269307db12e2c6abbf654e1c8d9a"
 
 patches:
-  "1.23.2.1":
+  "1.23.2.2":
     - patch_file: "patches/cmake-cxx-standard.patch"
     - patch_file: "patches/fix-gcc-chrono-cxx20.patch"
 
 # ONNX versions are based on the minor version used at
 # https://github.com/microsoft/onnxruntime/tree/main/cmake/external
 onnx_version_map:
-  "1.23.2.1": "1.18.0.1"
+  "1.23.2.2": "1.18.0.1"

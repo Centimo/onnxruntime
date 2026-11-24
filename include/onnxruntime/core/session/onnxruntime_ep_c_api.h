@@ -878,7 +878,9 @@ struct OrtEpFactory {
   /** \brief Get the version of the execution provider that the factory creates.
    *
    * The version string should adhere to the Semantic Versioning 2.0 specification
-   * (https://github.com/semver/semver/blob/v2.0.0/semver.md).
+   * (https://github.com/semver/semver/blob/v2.0.0/semver.md), or contain exactly four dot-separated numeric
+   * components: major.minor.patch.revision. Each numeric component must fit in an unsigned 32-bit integer and must
+   * not have leading zeroes unless it is exactly "0". The four-component form does not allow any suffix.
    *
    * The returned string should be a null-terminated, UTF-8 encoded string. ORT will copy it.
    *

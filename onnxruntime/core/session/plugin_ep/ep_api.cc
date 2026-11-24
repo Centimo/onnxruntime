@@ -48,7 +48,9 @@ ORT_API_STATUS_IMPL(CreateEpDevice, _In_ OrtEpFactory* ep_factory,
 
     {
       std::string ep_version = ep_factory->GetVersion(ep_factory);
-      ORT_API_RETURN_IF_STATUS_NOT_OK(ParseSemVerVersion(ep_version, nullptr));
+      if (!is_canonical_numeric_version(ep_version, 4)) {
+        ORT_API_RETURN_IF_STATUS_NOT_OK(ParseSemVerVersion(ep_version, nullptr));
+      }
       ep_device->ep_metadata.Add(kOrtEpDevice_EpMetadataKey_Version, std::move(ep_version));
     }
   }

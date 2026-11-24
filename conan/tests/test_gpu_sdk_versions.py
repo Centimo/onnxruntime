@@ -20,11 +20,11 @@ class SourceVersionTest(unittest.TestCase):
             root = Path(directory)
             (root / "cmake").mkdir()
             (root / "cmake" / "CMakeLists.txt").touch()
-            (root / "VERSION_NUMBER").write_text("1.23.2\n", encoding="utf-8")
+            (root / "VERSION_NUMBER").write_text("1.23.2.1\n", encoding="utf-8")
             recipe = OnnxRuntimeConan()
             recipe.folders.set_base_source(directory)
             with patch.object(recipe, "_patch_sources") as patch_sources:
-                with self.assertRaisesRegex(ConanException, r"1\.23\.2\.1.*1\.23\.2"):
+                with self.assertRaisesRegex(ConanException, r"1\.23\.2\.2.*1\.23\.2\.1"):
                     recipe.source()
                 patch_sources.assert_not_called()
 

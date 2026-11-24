@@ -14,7 +14,7 @@ required_conan_version = ">=2"
 
 class OnnxRuntimeConan(ConanFile):
     name = "onnxruntime"
-    version = "1.23.2.1"
+    version = "1.23.2.2"
     description = "ONNX Runtime: cross-platform, high performance ML inferencing and training accelerator"
     url = "https://github.com/Centimo/onnxruntime"
     license = "MIT"
